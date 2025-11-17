@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 - Birthday Preview</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        // 页面加载时应用旋转进入动画
+        document.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.add('fade-in-rotate');
+            
+            // 初始化个人中心交互功能
+            initUserCenter();
+        });
+        
+        // 显示通知函数（从登录页面复用）
+        function showNotification(message, type) {
+            // 检查是否已存在通知元素，如果有则移除
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            
+            // 根据类型设置不同的样式
+            if (type === 'error') {
+                notification.classList.add('notification-error');
+                notification.innerHTML = `<i class="fas fa-times-circle"></i> ${message}`;
+            } else if (type === 'success') {
+                notification.classList.add('notification-success');
+                notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            } else if (type === 'info') {
+                notification.classList.add('notification-info');
+                notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            }
+            
+            // 添加到body
+            document.body.appendChild(notification);
+            
+            // 添加通知样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 30px;
+                    color: white;
+                    font-size: 14px;
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease-out;
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                }
+                
+                .notification-error {
+                    background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+                }
+                
+                .notification-success {
+                    background: linear-gradient(135deg, #2ed573 0%, #55efc4 100%);
+                }
+                
+                .notification-info {
+                    background: linear-gradient(135deg, #747d8c 0%, #a4b0be 100%);
+                }
+                
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes fadeOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 3秒后自动消失
+            setTimeout(function() {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(function() {
+                    notification.remove();
+                    style.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // 初始化个人中心功能
+        function initUserCenter() {
+            // 消息中心点击事件
+            const messageCenter = document.getElementById('message-center');
+            if (messageCenter) {
+                messageCenter.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('消息中心功能暂未开放', 'info');
+                });
+            }
+            
+            // 个人信息点击事件
+            const userInfo = document.getElementById('user-info');
+            if (userInfo) {
+                userInfo.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('个人信息功能暂未开放', 'info');
+                });
+            }
+            
+            // 退出登录点击事件
+            const logout = document.getElementById('logout');
+            if (logout) {
+                logout.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // 添加退出动画
+                    document.body.classList.add('fade-out-rotate');
+                    
+                    // 等待动画完成后跳转
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 300);
+                });
+            }
+        }
+    </script>
+    <style>
+        /* 重置默认样式 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffefba;
+            min-height: 100vh;
+            display: block;
+            justify-content: normal;
+            align-items: normal;
+            overflow: visible;
+            margin: 0;
+            padding: 0;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #ffdd67;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .navbar-container {
+            width: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 40px;
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        
+        .nav-links li a:hover {
+            background-color: #ffeaa7;
+        }
+        
+        .nav-links li a.active {
+            background-color: #ffa502;
+            color: white;
+        }
+        
+        /* 个人中心图标 */
+        .nav-links li a .icon {
+            margin-right: 5px;
+        }
+        
+        .nav-links li a .icon img {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* 个人中心下拉菜单 */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 5px;
+            background-color: white;
+            min-width: 180px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1001;
+            overflow: hidden;
+        }
+        
+        .user-dropdown:hover .dropdown-content {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dropdown-content a {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: #f5f5f5;
+            color: #ffa502;
+        }
+        
+        /* 退出登录特殊样式 */
+        .dropdown-content a.logout-link:hover {
+            background-color: #ffe8e8;
+            color: #ff4757;
+        }
+        
+        /* 主内容区域 */
+        .main-content {
+            background-color: #ffefba;
+            min-height: 100vh;
+            padding: 80px 20px 20px 20px; /* 为顶部导航栏留出空间 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* 中央内容容器 */
+        .center-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 1200px;
+            gap: 60px; /* 保持间距不变 */
+            flex-wrap: wrap;
+        }
+        
+        /* 圆形图片样式 */
+        .profile-img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid #fff;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 爱心容器 - 缩小0.5倍 */
+        .heart-container {
+            position: relative;
+            width: 450px;
+            height: 420px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+        
+        /* 连接线样式 - 已移除 */
+        .connection-lines {
+            display: none;
+        }
+        
+        /* 让文字在最上层 */
+        .heart-text {
+            z-index: 2;
+        }
+        
+        /* 学习用户提供的心形实现 - 缩小0.5倍 */
+        .heart-shape {
+            position: relative;
+            width: 300px;
+            height: 270px;
+            margin: 0 auto;
+            animation: heartbeat 5s ease-in-out infinite;
+        }
+        
+        .heart-shape:before,
+        .heart-shape:after {
+            content: "";
+            position: absolute;
+            left: 150px;
+            top: 0;
+            width: 150px;
+            height: 240px;
+            background: linear-gradient(to bottom, #ff6b6b, #ff8e8e);
+            border-radius: 150px 150px 0 0;
+            transform: rotate(-45deg);
+            transform-origin: 0 100%;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+        }
+        
+        .heart-shape:after {
+            left: 0;
+            transform: rotate(45deg);
+            transform-origin: 100% 100%;
+        }
+        
+        /* 爱心文字 - 缩小0.5倍并居中 */
+        .heart-text {
+            position: absolute;
+            font-size: 100px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 3px 3px 9px rgba(0, 0, 0, 0.3);
+            z-index: 1;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -55%);
+        }
+        
+        /* 爱心跳动动画 */
+        @keyframes heartbeat {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .navbar-container {
+                padding: 0 10px;
+            }
+            
+            .nav-links li a {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-container">
+            <ul class="nav-links">
+                <li><a href="#" class="active">首页</a></li>
+                <li><a href="date.html">日期</a></li>
+                <li><a href="#">图库</a></li>
+                <li class="user-dropdown">
+                    <a href="#">
+                        <span class="icon"><img src="images/个人中心.svg" alt="个人中心图标"></span>
+                        个人中心 <i class="fas fa-chevron-down"></i>
+                    </a>
+                    <div class="dropdown-content">
+                        <a href="#" id="message-center">消息中心</a>
+                        <a href="#" id="user-info">个人信息</a>
+                        <a href="#" id="logout">退出登录</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <!-- 主内容区域 -->
+    <div class="main-content">
+        <!-- 连接线已移除 -->
+        
+        <!-- 确保内容在最上层 -->
+        <div class="center-content" style="position: relative; z-index: 2;">
+            <!-- 左侧图片 -->
+            <img src="images/me.jpg" alt="我的照片" class="profile-img">
+            
+            <!-- 新的心形实现 -->
+            <div class="heart-container">
+                <div class="heart-shape"></div>
+                <div class="heart-text">114</div>
+            </div>
+            
+            <!-- 右侧图片 -->
+            <img src="images/baby.jpg" alt="baby的照片" class="profile-img">
+        </div>
+    </div>
+    
+    <script>
+        // 导航栏交互效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links li a');
+            
+            // 添加点击事件，切换选中状态
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    // 移除所有链接的active类
+                    navLinks.forEach(item => item.classList.remove('active'));
+                    
+                    // 给当前点击的链接添加active类
+                    this.classList.add('active');
+                    
+                    // 这里可以根据需要添加页面切换逻辑
+                    console.log('切换到页面：' + this.textContent.trim());
+                });
+            });
+            
+            // 初始化个人中心功能
+            initUserCenter();
+        });
+        
+        // 显示通知函数
+        function showNotification(message, type) {
+            // 检查是否已存在通知元素，如果有则移除
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            
+            // 根据类型设置不同的样式
+            if (type === 'error') {
+                notification.classList.add('notification-error');
+                notification.innerHTML = `<i class="fas fa-times-circle"></i> ${message}`;
+            } else if (type === 'success') {
+                notification.classList.add('notification-success');
+                notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            } else if (type === 'info') {
+                notification.classList.add('notification-info');
+                notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            }
+            
+            // 添加到body
+            document.body.appendChild(notification);
+            
+            // 添加通知样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 30px;
+                    color: white;
+                    font-size: 14px;
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease-out;
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                }
+                
+                .notification-error {
+                    background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+                }
+                
+                .notification-success {
+                    background: linear-gradient(135deg, #2ed573 0%, #55efc4 100%);
+                }
+                
+                .notification-info {
+                    background: linear-gradient(135deg, #747d8c 0%, #a4b0be 100%);
+                }
+                
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes fadeOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 3秒后自动消失
+            setTimeout(function() {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(function() {
+                    notification.remove();
+                    style.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // 初始化个人中心功能
+        function initUserCenter() {
+            // 图库链接点击事件
+            const galleryLink = document.querySelector('.nav-links li:nth-child(3) a');
+            if (galleryLink) {
+                galleryLink.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('图库功能暂未开放', 'info');
+                });
+            }
+            
+            // 消息中心点击事件
+            const messageCenter = document.getElementById('message-center');
+            if (messageCenter) {
+                messageCenter.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('消息中心功能暂未开放', 'info');
+                });
+            }
+            
+            // 个人信息点击事件
+            const userInfo = document.getElementById('user-info');
+            if (userInfo) {
+                userInfo.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('个人信息功能暂未开放', 'info');
+                });
+            }
+            
+            // 退出登录点击事件
+            const logout = document.getElementById('logout');
+            if (logout) {
+                logout.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // 添加退出动画
+                    document.body.classList.add('fade-out-rotate');
+                    
+                    // 等待动画完成后跳转
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 300);
+                });
+            }
+        }
+    </script>
+</body>
+</html>

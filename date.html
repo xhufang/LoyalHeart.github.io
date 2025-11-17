@@ -1,0 +1,1684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>日期 - Birthday Preview</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #ffefba;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 禁止页面滚动 */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* 导航栏样式 */
+        .navbar {
+            background-color: #ffdd67;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .navbar-container {
+            width: 100%;
+            margin: 0;
+            display: flex;
+            justify-content: flex-end;
+            padding-right: 40px;
+        }
+        
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .nav-links li {
+            position: relative;
+        }
+        
+        .nav-links li a {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: #333;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+            margin: 5px;
+        }
+        
+        .nav-links li a:hover {
+            background-color: #ffeaa7;
+        }
+        
+        .nav-links li a.active {
+            background-color: #ffa502;
+            color: white;
+        }
+        
+        /* 个人中心图标 */
+        .nav-links li a .icon {
+            margin-right: 5px;
+        }
+        
+        .nav-links li a .icon img {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* 个人中心下拉菜单 */
+        .user-dropdown {
+            position: relative;
+        }
+        
+        .dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background-color: white;
+            min-width: 180px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            border-radius: 5px;
+            z-index: 1001;
+            overflow: hidden;
+        }
+        
+        .user-dropdown:hover .dropdown-content {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dropdown-content a {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        
+        .dropdown-content a:last-child {
+            border-bottom: none;
+        }
+        
+        .dropdown-content a:hover {
+            background-color: #f5f5f5;
+            color: #ffa502;
+        }
+        
+        /* 主内容区域 */
+        .main-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 80px 20px 20px 20px; /* 为顶部导航栏留出空间 */
+            position: relative;
+            min-height: calc(100vh - 80px);
+            overflow-x: auto;
+            gap: 30px;
+        }
+        
+        /* 日期容器 */
+        .date-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            transition: all 0.5s ease;
+            max-width: 320px;
+            flex-shrink: 0;
+            margin: 0 auto;
+        }
+        
+        .date-container.shift-left {
+            transform: translateX(0);
+            margin-right: 30px;
+        }
+        
+        /* 单月容器 */
+        .month-container {
+            margin-bottom: 25px;
+        }
+        
+        .month-container:last-child {
+            margin-bottom: 0;
+        }
+        
+        /* 月份标题 */
+        .month-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        /* 两个月的统一标题 */
+        .combined-title {
+            font-size: 28px;
+            font-weight: bold;
+            color: #e94057;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* 日期网格 */
+        .date-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            width: 280px;
+        }
+        
+        /* 星期标题样式 */
+        .weekday {
+            font-weight: bold;
+            color: #666;
+            padding: 8px 5px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        /* 日期单元格样式 */
+        .date-cell {
+            padding: 10px 5px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+            min-height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            position: relative;
+        }
+        
+        .date-cell:hover {
+            background-color: #f0f0f0;
+        }
+        
+        /* 特殊日期样式 */
+        .date-cell.heart-day {
+            background-color: #ffe6e6;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        
+        .date-cell.heart-day::before {
+            content: '❤️';
+            position: absolute;
+            font-size: 12px;
+            top: 2px;
+            right: 2px;
+        }
+        
+        .date-cell.dot-day::after {
+            content: '';
+            position: absolute;
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: #ff6b6b;
+            z-index: 1;
+        }
+        
+        .date-cell.has-image {
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .date-cell.has-image:hover {
+            background-color: #e6f7ff;
+        }
+        
+        /* 图片容器 */
+        .image-container {
+            position: relative;
+            transform: scale(0);
+            opacity: 0;
+            transition: all 0.5s ease;
+            z-index: 10;
+            width: 0;
+            flex-shrink: 0;
+            display: none;
+            max-width: 900px;
+        }
+        
+        .image-container.show {
+            transform: scale(1);
+            opacity: 1;
+            width: auto;
+            display: block;
+            flex: 1;
+        }
+        
+        /* 照片容器 - 优化五张图片布局 */
+        .photos-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            justify-items: center;
+            align-items: start;
+            padding: 40px;
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        /* 第五张照片单独放在第二行 */
+        .photo-frame:nth-child(4) {
+            grid-column: 1 / 2;
+        }
+        
+        .photo-frame:nth-child(5) {
+            grid-column: 2 / 3;
+        }
+        
+        /* 相框样式 */
+        .photo-frame {
+            position: relative;
+            padding: 12px;
+            background-color: #f8f8f8;
+            border: 5px solid #fff;
+            border-radius: 5px;
+            box-shadow: 
+                0 0 0 1px #ddd,
+                0 0 0 3px #ccc,
+                0 10px 20px rgba(0, 0, 0, 0.1);
+            transform: rotate(-1deg);
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 200px;
+            box-sizing: border-box;
+        }
+        
+        .photo-frame:nth-child(1) {
+            transform: rotate(-1.5deg);
+        }
+        
+        .photo-frame:nth-child(2) {
+            transform: rotate(1.2deg);
+        }
+        
+        .photo-frame:nth-child(3) {
+            transform: rotate(-0.8deg);
+        }
+        
+        .photo-frame:nth-child(4) {
+            transform: rotate(1deg);
+        }
+        
+        .photo-frame:nth-child(5) {
+            transform: rotate(-0.5deg);
+        }
+        
+        .photo-frame:hover {
+            transform: rotate(0deg) scale(1.05) translateY(-5px);
+            box-shadow: 
+                0 0 0 1px #ddd,
+                0 0 0 3px #ccc,
+                0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 图片样式 */
+        .photo-frame img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 3px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 响应式布局调整 */
+        @media (max-width: 1200px) {
+            .main-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 20px;
+            }
+            
+            .date-container.shift-left {
+                transform: translateX(0);
+                margin-right: 0;
+            }
+            
+            .image-container {
+                max-width: 100%;
+            }
+            
+            .photos-container {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 20px;
+            }
+            
+            .photo-frame:nth-child(4) {
+                grid-column: 1 / 2;
+            }
+            
+            .photo-frame:nth-child(5) {
+                grid-column: 2 / 3;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                padding: 70px 10px 20px 10px;
+            }
+            
+            .date-container {
+                max-width: 90vw;
+            }
+            
+            .photos-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 20px;
+            }
+            
+            .photo-frame:nth-child(4) {
+                grid-column: auto;
+            }
+            
+            .photo-frame:nth-child(5) {
+                grid-column: auto;
+            }
+            
+            .photo-frame {
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .photos-container {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .photo-frame:nth-child(4) {
+                grid-column: auto;
+            }
+            
+            .photo-frame:nth-child(5) {
+                grid-column: auto;
+            }
+            
+            .date-grid {
+                width: 100%;
+                max-width: 280px;
+            }
+        }
+        
+        /* 返回按钮 */
+        .back-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            z-index: 20;
+            cursor: pointer;
+        }
+        
+        .back-button:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 特殊遮罩层样式 */
+        .special-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .special-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .special-overlay .special-content {
+            position: relative;
+            text-align: center;
+        }
+        
+        .special-overlay .special-svg {
+            width: 300px;
+            height: 300px;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .special-overlay .close-btn {
+            position: absolute;
+            top: -50px;
+            right: -50px;
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.8);
+        }
+        
+        .special-overlay .close-btn:hover {
+            background-color: #ff5252;
+            transform: scale(1.1);
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* 生日祝福遮罩层样式 */
+        .birthday-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .birthday-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .birthday-overlay .birthday-content {
+            position: relative;
+            text-align: center;
+        }
+        
+        .birthday-overlay .birthday-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+            background: transparent;
+            padding: 40px 60px;
+            border-radius: 20px;
+            animation: birthdayFloat 2s ease-in-out infinite;
+        }
+        
+        .birthday-overlay .birthday-text {
+            font-size: 60px;
+            font-weight: bold;
+            color: #ff1493;
+            text-shadow: 0 0 20px rgba(255, 20, 147, 1), 0 0 30px rgba(255, 20, 147, 0.8), 0 0 40px rgba(255, 20, 147, 0.6), 0 0 50px rgba(255, 20, 147, 0.4);
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            letter-spacing: 3px;
+            transform: rotate(-5deg);
+            animation: textGlow 1s ease-in-out infinite alternate;
+        }
+        
+        .birthday-overlay .birthday-cake {
+            width: 120px;
+            height: 120px;
+            object-fit: contain;
+            filter: drop-shadow(0 0 20px rgba(255, 20, 147, 0.8));
+            animation: cakeBounce 1s ease-in-out infinite alternate;
+            transform: rotate(5deg);
+        }
+        
+        @keyframes birthdayFloat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(1deg); }
+        }
+        
+        @keyframes textGlow {
+            0% { text-shadow: 0 0 10px rgba(255, 105, 180, 0.8), 0 0 20px rgba(255, 105, 180, 0.6), 0 0 30px rgba(255, 105, 180, 0.4); }
+            100% { text-shadow: 0 0 15px rgba(255, 105, 180, 1), 0 0 25px rgba(255, 105, 180, 0.8), 0 0 35px rgba(255, 105, 180, 0.6), 0 0 40px rgba(255, 105, 180, 0.4); }
+        }
+        
+        @keyframes cakeBounce {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.05); }
+        }
+        
+        /* 信纸样式遮罩层 */
+        .letter-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10002;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .letter-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .letter-content {
+            background: transparent;
+            padding: 60px 80px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 700px;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .letter-overlay.show .letter-content {
+            transform: scale(1);
+        }
+        
+        .letter-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #ff1493, transparent);
+        }
+        
+        .letter-text h2 {
+            color: #ff1493;
+            font-size: 42px;
+            margin-bottom: 20px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-shadow: 0 0 10px rgba(255, 20, 147, 0.8), 0 0 20px rgba(255, 20, 147, 0.6), 0 0 30px rgba(255, 20, 147, 0.4);
+            letter-spacing: 2px;
+        }
+        
+        .letter-text p {
+            color: #ffffff;
+            font-size: 24px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+        }
+        
+        .letter-images {
+                        display: flex;
+                        flex-direction: row;
+                        gap: 60px;
+                        align-items: center;
+                        justify-content: center;
+                    }
+        
+        .letter-image {
+            width: 280px;
+            height: 280px;
+            object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3), 0 0 60px rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .letter-image:hover {
+            transform: scale(1.05);
+        }
+        
+        /* 第四层：深情告白遮罩层样式 */
+        .confession-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10003;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+        
+        .confession-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        
+        .confession-content {
+            background: transparent;
+            padding: 60px 80px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 800px;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+        
+        .confession-overlay.show .confession-content {
+            transform: scale(1);
+        }
+        
+
+        
+        .confession-text h2 {
+            color: #ff1493;
+            font-size: 48px;
+            margin-bottom: 30px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-shadow: 0 0 20px rgba(255, 20, 147, 0.8), 0 0 30px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 20, 147, 0.4);
+            letter-spacing: 3px;
+            animation: heartBeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartBeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .confession-text p {
+            color: #ffffff;
+            font-size: 22px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+        
+        .confession-text p:nth-child(2) { animation-delay: 0.2s; }
+        .confession-text p:nth-child(3) { animation-delay: 0.4s; }
+        .confession-text p:nth-child(4) { animation-delay: 0.6s; }
+        .confession-text p:nth-child(5) { animation-delay: 0.8s; }
+        .confession-text p:nth-child(6) { animation-delay: 1.0s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .confession-images {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .confession-image {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 20, 147, 0.6);
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInScale 0.8s ease-out forwards;
+        }
+        
+        .confession-image:nth-child(1) { animation-delay: 1.2s; }
+        .confession-image:nth-child(2) { animation-delay: 1.4s; }
+        .confession-image:nth-child(3) { animation-delay: 1.6s; }
+        .confession-image:nth-child(4) { animation-delay: 1.8s; }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        .confession-image:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 15px 40px rgba(255, 20, 147, 0.8);
+        }
+
+        /* 第五层：回忆与成长遮罩层样式 */
+        .memories-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10005;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .memories-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .memories-content {
+            position: relative;
+            z-index: 10006;
+            max-width: 90%;
+            max-height: 90%;
+            background: transparent;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+
+        .memories-overlay.show .memories-content {
+            transform: scale(1);
+        }
+
+        .memories-text {
+            margin-bottom: 40px;
+        }
+
+        .memories-text p {
+            color: #ffffff;
+            font-size: 28px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .memories-text p:nth-child(1) { animation-delay: 0.2s; }
+        .memories-text p:nth-child(2) { animation-delay: 0.4s; }
+
+        .memories-images {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .memory-row {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+
+        .memory-image {
+            width: 200px;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInScale 0.8s ease-out forwards;
+        }
+
+        .memory-image:nth-child(1) { animation-delay: 0.6s; }
+        .memory-image:nth-child(2) { animation-delay: 0.8s; }
+        .memory-image:nth-child(3) { animation-delay: 1.0s; }
+
+        .memory-image:hover {
+            transform: scale(1.05);
+        }
+
+        .quarrel-row .memory-image {
+            border: 3px solid #ff4444;
+            box-shadow: 0 5px 20px rgba(255, 68, 68, 0.6);
+        }
+
+        .flower-row .memory-image {
+            border: 3px solid #ff69b4;
+            box-shadow: 0 5px 20px rgba(255, 105, 180, 0.6);
+        }
+
+        /* 第六层：美好祝愿遮罩层样式 */
+        .wishes-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10007;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            pointer-events: none;
+        }
+
+        .wishes-overlay.show {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+        .wishes-content {
+            background: transparent;
+            padding: 60px 80px;
+            border-radius: 25px;
+            text-align: center;
+            max-width: 800px;
+            position: relative;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+        }
+
+        .wishes-overlay.show .wishes-content {
+            transform: scale(1);
+        }
+
+        .wishes-text h2 {
+            color: #ff1493;
+            font-size: 48px;
+            margin-bottom: 40px;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            text-shadow: 0 0 20px rgba(255, 20, 147, 0.8), 0 0 30px rgba(255, 20, 147, 0.6), 0 0 40px rgba(255, 20, 147, 0.4);
+            letter-spacing: 3px;
+            animation: heartBeat 1.5s ease-in-out infinite;
+        }
+
+        .wishes-text p {
+            color: #ffffff;
+            font-size: 22px;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .wishes-text p:nth-child(2) { animation-delay: 0.2s; }
+        .wishes-text p:nth-child(3) { animation-delay: 0.4s; }
+        .wishes-text p:nth-child(4) { animation-delay: 0.6s; }
+        .wishes-text p:nth-child(5) { animation-delay: 0.8s; }
+        .wishes-text p:nth-child(6) { animation-delay: 1.0s; }
+        .wishes-text p:nth-child(7) { animation-delay: 1.2s; }
+        .wishes-text p:nth-child(8) { animation-delay: 1.4s; }
+
+        .wishes-images {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 50px;
+        }
+
+        .wishes-image {
+            width: 250px;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(255, 20, 147, 0.6);
+            transition: all 0.3s ease;
+            opacity: 0;
+            animation: fadeInScale 0.8s ease-out forwards;
+        }
+
+        .wishes-image:nth-child(1) { animation-delay: 1.6s; }
+        .wishes-image:nth-child(2) { animation-delay: 1.8s; }
+
+        .wishes-image:hover {
+            transform: scale(1.05) rotate(2deg);
+            box-shadow: 0 15px 40px rgba(255, 20, 147, 0.8);
+        }
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+    <!-- 导航栏 -->
+        <nav class="navbar">
+            <div class="navbar-container">
+                <ul class="nav-links">
+                    <li><a href="dashboard.html">首页</a></li>
+                    <li><a href="date.html" class="active">日期</a></li>
+                    <li><a href="#">图库</a></li>
+                    <li class="user-dropdown">
+                        <a href="#">
+                            <span class="icon"><img src="images/个人中心.svg" alt="个人中心图标"></span>
+                            个人中心 <i class="fas fa-chevron-down"></i>
+                        </a>
+                        <div class="dropdown-content">
+                            <a href="#" id="message-center">消息中心</a>
+                            <a href="#" id="user-info">个人信息</a>
+                            <a href="#" id="logout">退出登录</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+        
+        <!-- 主内容区域 -->
+        <div class="main-container">
+            <!-- 日期容器 -->
+            <div class="date-container" id="dateContainer">
+            <!-- 图片容器将在JavaScript中动态显示 -->
+                <!-- 统一标题 -->
+                <div class="combined-title">2025年10月~11月</div>
+                
+                <!-- 10月日历 -->
+                <div class="month-container">
+                    <!-- 星期标题 -->
+                    <div class="date-grid">
+                        <div class="weekday">日</div>
+                        <div class="weekday">一</div>
+                        <div class="weekday">二</div>
+                        <div class="weekday">三</div>
+                        <div class="weekday">四</div>
+                        <div class="weekday">五</div>
+                        <div class="weekday">六</div>
+                        
+                        <!-- 第一行 - 10月1日是周三 -->
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell">1</div>
+                        <div class="date-cell">2</div>
+                        <div class="date-cell">3</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/2025100401.jpg","images/2025100402.jpg"]'>4</div>
+                        
+                        <!-- 第二行 -->
+                        <div class="date-cell dot-day has-image" data-images='["images/2025100501.jpg","images/2025100502.jpg","images/2025100503.jpg"]'>5</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/2025100601.jpg","images/2025100602.jpg","images/2025100603.jpg","images/2025100604.jpg","images/2025100605.jpg"]'>6</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/2025100701.jpg"]'>7</div>
+                        <div class="date-cell">8</div>
+                        <div class="date-cell">9</div>
+                        <div class="date-cell">10</div>
+                        <div class="date-cell">11</div>
+                        
+                        <!-- 第三行 -->
+                        <div class="date-cell">12</div>
+                        <div class="date-cell">13</div>
+                        <div class="date-cell">14</div>
+                        <div class="date-cell">15</div>
+                        <div class="date-cell">16</div>
+                        <div class="date-cell">17</div>
+                        <div class="date-cell">18</div>
+                        
+                        <!-- 第四行 -->
+                        <div class="date-cell">19</div>
+                        <div class="date-cell">20</div>
+                        <div class="date-cell">21</div>
+                        <div class="date-cell">22</div>
+                        <div class="date-cell">23</div>
+                        <div class="date-cell">24</div>
+                        <div class="date-cell">25</div>
+                        
+                        <!-- 第五行 -->
+                        <div class="date-cell">26</div>
+                        <div class="date-cell">27</div>
+                        <div class="date-cell">28</div>
+                        <div class="date-cell">29</div>
+                        <div class="date-cell">30</div>
+                        <div class="date-cell">31</div>
+                        <div class="date-cell"></div>
+                    </div>
+                </div>
+                
+                <!-- 11月日历 -->
+                <div class="month-container">
+                    <!-- 星期标题 -->
+                    <div class="date-grid">
+                        <div class="weekday">日</div>
+                        <div class="weekday">一</div>
+                        <div class="weekday">二</div>
+                        <div class="weekday">三</div>
+                        <div class="weekday">四</div>
+                        <div class="weekday">五</div>
+                        <div class="weekday">六</div>
+                        
+                        <!-- 第一行 -->
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell">1</div>
+                        
+                        <!-- 第二行 -->
+                        <div class="date-cell">2</div>
+                        <div class="date-cell">3</div>
+                        <div class="date-cell">4</div>
+                        <div class="date-cell">5</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/202511062325.jpg","images/202511062326.jpg","images/202511062327.jpg"]'>6</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/2025110701.jpg","images/2025110702.jpg","images/2025110703.jpg","images/2025110704.jpg","images/2025110705.jpg","images/2025110706.jpg"]'>7</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/202511082023.jpg","images/202511082024.jpg","images/202511082025.jpg","images/202511082026.jpg","images/202511082027.jpg"]'>8</div>
+                        <div class="date-cell dot-day has-image" data-images='["images/2025110901.jpg","images/2025110902.jpg"]'>9</div>
+                        <div class="date-cell">10</div>
+                        <div class="date-cell">11</div>
+                        <div class="date-cell">12</div>
+                        
+                        <!-- 第三行 -->
+                        <div class="date-cell">13</div>
+                        <div class="date-cell">14</div>
+                        <div class="date-cell">15</div>
+                        <div class="date-cell">16</div>
+                        <div class="date-cell heart-day" data-special="22th.svg">17</div>
+                        <div class="date-cell">18</div>
+                        <div class="date-cell">19</div>
+                        
+                        <!-- 第四行 -->
+                        <div class="date-cell">20</div>
+                        <div class="date-cell">21</div>
+                        <div class="date-cell">22</div>
+                        <div class="date-cell">23</div>
+                        <div class="date-cell">24</div>
+                        <div class="date-cell">25</div>
+                        <div class="date-cell">26</div>
+                        
+                        <!-- 第五行 -->
+                        <div class="date-cell">27</div>
+                        <div class="date-cell">28</div>
+                        <div class="date-cell">29</div>
+                        <div class="date-cell">30</div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                        <div class="date-cell"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 图片容器 -->
+            <div class="image-container" id="imageContainer">
+                <button class="back-button" id="backButton">返回</button>
+                <div class="photos-container" id="photosContainer">
+                    <!-- 图片将通过JavaScript动态添加 -->
+                </div>
+            </div>
+            
+            <!-- 特殊遮罩层 -->
+            <div class="special-overlay" id="specialOverlay">
+                <div class="special-content">
+                    <img src="images/22th.svg" alt="22th" class="special-svg" id="specialSvg">
+                </div>
+            </div>
+            
+            <!-- 生日祝福遮罩层 -->
+            <div class="birthday-overlay" id="birthdayOverlay">
+                <div class="birthday-content">
+                    <div class="birthday-row">
+                        <div class="birthday-text">生日快乐宝贝！</div>
+                        <img src="images/cake.jpg" alt="蛋糕" class="birthday-cake">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 信纸样式遮罩层 -->
+            <div class="letter-overlay" id="letterOverlay">
+                <div class="letter-content">
+                    <div class="letter-text">
+                        <p>宝贝这就是属于我们的网站</p>
+                        <p>目前处于预览版，功能还在开发中</p>
+                        <p>好多功能都未开放，但是也都在开发啦</p>
+                        <p>这个网站加上将前21年的生日礼物补齐就是你的22岁生日礼物</p>
+                    </div>
+                    <div class="letter-images">
+                        <img src="images/inviteCode.png" alt="邀请码" class="letter-image">
+                        <img src="images/userCode.png" alt="用户码" class="letter-image">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第四层：深情告白遮罩层 -->
+            <div class="confession-overlay" id="confessionOverlay">
+                <div class="confession-content">
+                    <div class="confession-text">
+                        <p>不知不觉我们都在一起114天啦</p>
+                        <p>但是我们只见了四次面</p>
+                        <p>每次走的时候看到你不舍得表情我都难受得要死</p>
+                        <p>好想好想和你一直在一起啊宝贝</p>
+                        <p>让我们共克时艰吧</p>
+                    </div>
+                    <div class="confession-images">
+                        <img src="images/离开1.jpg" alt="离开1" class="confession-image">
+                        <img src="images/离开2.jpg" alt="离开2" class="confession-image">
+                        <img src="images/2025100701.jpg" alt="2025100701" class="confession-image">
+                        <img src="images/2025110901.jpg" alt="2025110901" class="confession-image">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 第五层：回忆与成长遮罩层 -->
+            <div class="memories-overlay" id="memoriesOverlay">
+                <div class="memories-content">
+                    <div class="memories-text">
+                        <p>这114天里，我们有吵架有鲜花</p>
+                        <p>不管怎么样我们的感情都越来越好</p>
+                    </div>
+                    <div class="memories-images">
+                        <div class="memory-row quarrel-row">
+                            <img src="images/吵架1.jpg" alt="吵架1" class="memory-image">
+                            <img src="images/吵架2.jpg" alt="吵架2" class="memory-image">
+                        </div>
+                        <div class="memory-row flower-row">
+                            <img src="images/花1.jpg" alt="花1" class="memory-image">
+                            <img src="images/花2.jpg" alt="花2" class="memory-image">
+                            <img src="images/花3.jpg" alt="花3" class="memory-image">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 第六层：美好祝愿遮罩层 -->
+            <div class="wishes-overlay" id="wishesOverlay">
+                <div class="wishes-content">
+                    <div class="wishes-text">
+                        <p>希望宝贝以后越来越坚强</p>
+                        <p>遇到什么问题都能从容应对</p>
+                        <p>处理任何问题都游刃有余</p>
+                        <p>学习越来越好，学术素养越来越浓厚</p>
+                        <p>做一个富有智慧的成熟女人</p>
+                        <p>也希望我们的感情越来越好</p>
+                        <p>生日快乐哦宝贝，非常非常爱你！</p>
+                    </div>
+                    <div class="wishes-images">
+                        <img src="images/合1.jpg" alt="合1" class="wishes-image">
+                        <img src="images/合2.jpg" alt="合2" class="wishes-image">
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化日期点击事件
+            initDateClicks();
+            
+            // 初始化个人中心功能
+            initUserCenter();
+        });
+        
+        // 初始化日期点击事件
+        function initDateClicks() {
+            // 为有图片的日期添加点击事件
+            const imageDates = document.querySelectorAll('.date-cell.has-image');
+            imageDates.forEach(date => {
+                date.addEventListener('click', function() {
+                    // 检查是否有多张图片
+                    const imagesData = this.getAttribute('data-images');
+                    if (imagesData) {
+                        // 有多张图片，一次性展示所有图片
+                        const imageSrcs = JSON.parse(imagesData);
+                        showImages(imageSrcs);
+                    } else {
+                        // 单张图片
+                        const imageSrc = this.getAttribute('data-image');
+                        showImages([imageSrc]);
+                    }
+                });
+            });
+            
+            // 为特殊日期（11月17日）添加点击事件
+            const specialDates = document.querySelectorAll('.date-cell.heart-day[data-special]');
+            specialDates.forEach(date => {
+                date.addEventListener('click', function() {
+                    const specialSvg = this.getAttribute('data-special');
+                    if (specialSvg) {
+                        showSpecialOverlay(specialSvg);
+                    }
+                });
+            });
+            
+            // 为返回按钮添加点击事件
+            const backButton = document.getElementById('backButton');
+            backButton.addEventListener('click', function() {
+                hideImages();
+            });
+            
+            // 点击遮罩层切换内容阶段
+            setupOverlayClickHandlers();
+        }
+        
+        // 显示多张图片函数
+        function showImages(imageSrcs) {
+            const dateContainer = document.getElementById('dateContainer');
+            const imageContainer = document.getElementById('imageContainer');
+            const photosContainer = document.getElementById('photosContainer');
+            
+            // 清空现有图片
+            photosContainer.innerHTML = '';
+            
+            // 创建并添加所有图片
+            imageSrcs.forEach((src, index) => {
+                const photoFrame = document.createElement('div');
+                photoFrame.className = 'photo-frame';
+                
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = '日期照片 ' + (index + 1) + '/' + imageSrcs.length;
+                
+                photoFrame.appendChild(img);
+                photosContainer.appendChild(photoFrame);
+            });
+            
+            // 日期容器左移
+            dateContainer.classList.add('shift-left');
+            
+            // 立即显示图片（不需要延迟，因为现在是在右侧而不是覆盖）
+            imageContainer.classList.add('show');
+        }
+        
+        // 隐藏图片函数
+        function hideImages() {
+            const dateContainer = document.getElementById('dateContainer');
+            const imageContainer = document.getElementById('imageContainer');
+            
+            // 隐藏图片
+            imageContainer.classList.remove('show');
+            
+            // 日期容器恢复原位
+            setTimeout(() => {
+                dateContainer.classList.remove('shift-left');
+            }, 200);
+        }
+        
+        // 显示特殊遮罩层函数
+        function showSpecialOverlay(svgFile) {
+            const specialOverlay = document.getElementById('specialOverlay');
+            const specialSvg = document.getElementById('specialSvg');
+            
+            // 设置SVG源文件
+            specialSvg.src = 'images/' + svgFile;
+            
+            // 显示遮罩层
+            specialOverlay.classList.add('show');
+            
+            // 防止页面滚动
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 隐藏特殊遮罩层函数
+        function hideSpecialOverlay() {
+            const specialOverlay = document.getElementById('specialOverlay');
+
+            // 隐藏遮罩层
+            specialOverlay.classList.remove('show');
+
+            // 恢复页面滚动
+            document.body.style.overflow = '';
+        }
+
+        // 显示生日祝福遮罩层
+        function showBirthdayOverlay() {
+            const birthdayOverlay = document.getElementById('birthdayOverlay');
+            birthdayOverlay.classList.add('show');
+            console.log('生日祝福遮罩层已显示');
+            console.log('遮罩层元素:', birthdayOverlay);
+            console.log('遮罩层classList:', birthdayOverlay.classList);
+        }
+
+        // 隐藏生日祝福遮罩层
+        function hideBirthdayOverlay() {
+            const birthdayOverlay = document.getElementById('birthdayOverlay');
+            birthdayOverlay.classList.remove('show');
+        }
+        
+        // 显示信纸遮罩层
+        function showLetterOverlay() {
+            const letterOverlay = document.getElementById('letterOverlay');
+            letterOverlay.classList.add('show');
+            console.log('信纸遮罩层已显示');
+        }
+        
+        // 隐藏信纸遮罩层
+        function hideLetterOverlay() {
+            const letterOverlay = document.getElementById('letterOverlay');
+            letterOverlay.classList.remove('show');
+        }
+        
+        // 显示深情告白遮罩层
+        function showConfessionOverlay() {
+            const confessionOverlay = document.getElementById('confessionOverlay');
+            confessionOverlay.classList.add('show');
+            console.log('深情告白遮罩层已显示');
+        }
+        
+        // 隐藏深情告白遮罩层
+        function hideConfessionOverlay() {
+            const confessionOverlay = document.getElementById('confessionOverlay');
+            confessionOverlay.classList.remove('show');
+        }
+
+        // 显示回忆与成长遮罩层
+        function showMemoriesOverlay() {
+            const memoriesOverlay = document.getElementById('memoriesOverlay');
+            memoriesOverlay.classList.add('show');
+            console.log('回忆与成长遮罩层已显示');
+        }
+
+        // 隐藏回忆与成长遮罩层
+        function hideMemoriesOverlay() {
+            const memoriesOverlay = document.getElementById('memoriesOverlay');
+            memoriesOverlay.classList.remove('show');
+        }
+
+        // 显示美好祝愿遮罩层
+        function showWishesOverlay() {
+            const wishesOverlay = document.getElementById('wishesOverlay');
+            wishesOverlay.classList.add('show');
+            console.log('美好祝愿遮罩层已显示');
+        }
+
+        // 隐藏美好祝愿遮罩层
+        function hideWishesOverlay() {
+            const wishesOverlay = document.getElementById('wishesOverlay');
+            wishesOverlay.classList.remove('show');
+        }
+        
+        // 设置遮罩层点击事件处理
+        function setupOverlayClickHandlers() {
+            let currentStage = 0; // 0: 特殊遮罩层, 1: 生日祝福, 2: 信纸内容, 3: 深情告白, 4: 回忆与成长, 5: 美好祝愿
+            
+            // 特殊遮罩层点击事件
+            const specialOverlay = document.getElementById('specialOverlay');
+            if (specialOverlay) {
+                specialOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.id === 'specialSvg') {
+                        // 从阶段0到阶段1
+                        hideSpecialOverlay();
+                        showBirthdayOverlay();
+                        currentStage = 1;
+                    }
+                });
+            }
+            
+            // 生日祝福遮罩层点击事件
+            const birthdayOverlay = document.getElementById('birthdayOverlay');
+            if (birthdayOverlay) {
+                birthdayOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('birthday-content')) {
+                        // 从阶段1到阶段2
+                        hideBirthdayOverlay();
+                        showLetterOverlay();
+                        currentStage = 2;
+                    }
+                });
+            }
+            
+            // 信纸遮罩层点击事件
+            const letterOverlay = document.getElementById('letterOverlay');
+            if (letterOverlay) {
+                letterOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('letter-content')) {
+                        // 从阶段2到阶段3
+                        hideLetterOverlay();
+                        showConfessionOverlay();
+                        currentStage = 3;
+                    }
+                });
+            }
+            
+            // 深情告白遮罩层点击事件
+            const confessionOverlay = document.getElementById('confessionOverlay');
+            if (confessionOverlay) {
+                confessionOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('confession-content')) {
+                        // 从阶段3到阶段4
+                        hideConfessionOverlay();
+                        showMemoriesOverlay();
+                        currentStage = 4;
+                    }
+                });
+            }
+
+            // 回忆与成长遮罩层点击事件
+            const memoriesOverlay = document.getElementById('memoriesOverlay');
+            if (memoriesOverlay) {
+                memoriesOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('memories-content')) {
+                        // 从阶段4到阶段5
+                        hideMemoriesOverlay();
+                        showWishesOverlay();
+                        currentStage = 5;
+                    }
+                });
+            }
+
+            // 美好祝愿遮罩层点击事件
+            const wishesOverlay = document.getElementById('wishesOverlay');
+            if (wishesOverlay) {
+                wishesOverlay.addEventListener('click', function(e) {
+                    if (e.target === this || e.target.classList.contains('wishes-content')) {
+                        // 从阶段5回到阶段0（关闭所有遮罩层）
+                        hideWishesOverlay();
+                        currentStage = 0;
+                        // 恢复页面滚动
+                        document.body.style.overflow = '';
+                    }
+                });
+            }
+        }
+        
+        // 显示通知函数
+        function showNotification(message, type) {
+            // 检查是否已存在通知元素，如果有则移除
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+            
+            // 创建通知元素
+            const notification = document.createElement('div');
+            notification.classList.add('notification');
+            
+            // 根据类型设置不同的样式
+            if (type === 'error') {
+                notification.classList.add('notification-error');
+                notification.innerHTML = `<i class="fas fa-times-circle"></i> ${message}`;
+            } else if (type === 'success') {
+                notification.classList.add('notification-success');
+                notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            } else if (type === 'info') {
+                notification.classList.add('notification-info');
+                notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            }
+            
+            // 添加到body
+            document.body.appendChild(notification);
+            
+            // 添加通知样式
+            const style = document.createElement('style');
+            style.textContent = `
+                .notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 30px;
+                    color: white;
+                    font-size: 14px;
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    animation: slideInRight 0.3s ease-out;
+                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+                }
+                
+                .notification-error {
+                    background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%);
+                }
+                
+                .notification-success {
+                    background: linear-gradient(135deg, #2ed573 0%, #55efc4 100%);
+                }
+                
+                .notification-info {
+                    background: linear-gradient(135deg, #747d8c 0%, #a4b0be 100%);
+                }
+                
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+                
+                @keyframes fadeOut {
+                    from {
+                        opacity: 1;
+                    }
+                    to {
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // 3秒后自动消失
+            setTimeout(function() {
+                notification.style.animation = 'fadeOut 0.3s ease-out';
+                setTimeout(function() {
+                    notification.remove();
+                    style.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // 初始化个人中心功能
+        function initUserCenter() {
+            // 图库链接点击事件
+            const galleryLink = document.querySelector('.nav-links li:nth-child(3) a');
+            if (galleryLink) {
+                galleryLink.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('图库功能暂未开放', 'info');
+                });
+            }
+            
+            // 消息中心点击事件
+            const messageCenter = document.getElementById('message-center');
+            if (messageCenter) {
+                messageCenter.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('消息中心功能暂未开放', 'info');
+                });
+            }
+            
+            // 个人信息点击事件
+            const userInfo = document.getElementById('user-info');
+            if (userInfo) {
+                userInfo.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    showNotification('个人信息功能暂未开放', 'info');
+                });
+            }
+            
+            // 退出登录点击事件
+            const logout = document.getElementById('logout');
+            if (logout) {
+                logout.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    // 添加退出动画
+                    document.body.classList.add('fade-out-rotate');
+                    
+                    // 等待动画完成后跳转
+                    setTimeout(function() {
+                        window.location.href = 'index.html';
+                    }, 300);
+                });
+            }
+        }
+    </script>
+</body>
+</html>
